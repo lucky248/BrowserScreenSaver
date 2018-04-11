@@ -1,0 +1,43 @@
+﻿<Window x:Class="BrowserScreenSaver.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BrowserScreenSaver"
+        mc:Ignorable="d"
+        Title="MainWindow" WindowStyle="None" Closing="Window_Closing">
+    <Grid x:Name="MainGrid" Background="Silver">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0" Name="TopGrid">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <local:BrowserPanel Grid.Column="0" x:Name="TopLeftBrowser" Height="Auto" Width="Auto" SizeChanged="TopBrowser_OnSizeChanged"/>
+            <GridSplitter Grid.Column="1" Name="TopGridSplitter" Width="5" ResizeBehavior="PreviousAndNext" VerticalAlignment="Stretch" ShowsPreview="True" />
+            <local:BrowserPanel Grid.Column="2" x:Name="TopRightBrowser" Height="Auto" Width="Auto" SizeChanged="TopBrowser_OnSizeChanged"/>
+        </Grid>
+        <GridSplitter Grid.Row="1" Name="MiddleGridSplitter" Height="5" ResizeBehavior="PreviousAndNext" HorizontalAlignment="Stretch" ShowsPreview="True" />
+        <Grid Grid.Row="2" Name="BottomGrid">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <local:BrowserPanel x:Name="BottomLeftBrowser" Height="Auto" Width="Auto" />
+            <GridSplitter Grid.Column="1" Name="BottomGridSplitter" Width="5" ResizeBehavior="PreviousAndNext" VerticalAlignment="Stretch" ShowsPreview="True" />
+            <local:BrowserPanel Grid.Column="2" x:Name="BottomRightBrowser" Height="Auto" Width="Auto" SizeChanged="TopBrowser_OnSizeChanged"/>
+        </Grid>
+        <Popup Grid.Row="0" Grid.RowSpan="3" Name="Popup" Placement="Absolute">
+            <Grid Background="Silver">
+                <Grid Name="PopupMainGrid" Margin="6">
+                </Grid>
+            </Grid>
+        </Popup>
+    </Grid>
+</Window>
