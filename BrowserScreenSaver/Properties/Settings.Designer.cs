@@ -274,5 +274,17 @@ namespace BrowserScreenSaver.Properties {
                 this["NavigationEnabledByUtc"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AllowPopups {
+            get {
+                return ((bool)(this["AllowPopups"]));
+            }
+            set {
+                this["AllowPopups"] = value;
+            }
+        }
     }
 }

@@ -19,6 +19,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="4"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="4"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -43,11 +45,12 @@
             <TextBox Name="Uri4" TextChanged="Uri_TextChanged"/>
         </Border>
         <CheckBox Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Name="OnResume" Content="On resume, display logon screen" Margin="4,6"/>
-        <StackPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="5,0">
+        <CheckBox Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Name="AllowPopups" Content="Allow pop-up dialogs" Margin="4,6"/>
+        <StackPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="5,0">
             <Button Name="EnableNavigationBtn" Content="Enable browser navigation for 5 mins" Click="EnableNavigationBtn_Click"/>
             <TextBlock Name="NavigationEnabledTextBlock" Text="status" VerticalAlignment="Center" Margin="4,0"/>
         </StackPanel>
-        <StackPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
+        <StackPanel Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Cancel" Margin="4" MinWidth="70" Click="CancelButton_OnClick"/>
             <Button Content="OK" Margin="4" MinWidth="70" Click="OKButton_OnClick"/>
         </StackPanel>

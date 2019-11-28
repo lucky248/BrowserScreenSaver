@@ -19,6 +19,7 @@ namespace BrowserScreenSaver
     {
         private bool isPreviewMode;
         private int? scale;
+        private bool browserConfigured;
         private bool loadCompleted;
         private bool isMaximized;
         private int refreshFrequencyMins;
@@ -55,21 +56,35 @@ namespace BrowserScreenSaver
             set
             {
                 bool changed = this.scale.HasValue && this.scale.Value != value;
-                this.scale = value; 
-                ConfigureBrowser();
+                this.scale = value;
+
                 if (changed)
                 {
+                    if (this.loadCompleted)
+                    {
+                        this.WebBrowser.SetScale(scaleLevel: this.EffectiveScale);
+                    }
+
                     this.Slider.Value = value;
                     this.ScaleChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
 
+        public int EffectiveScale => this.IsPreviewMode ? Math.Max(10, this.Scale / 4) : this.Scale; // Between 10 and 1000
+
         public int RefreshFrequencyMin
         {
             get { return this.refreshFrequencyMins; }
             set
             {
+                if (value <= 0)
+                {
+                    timer.IsEnabled = false;
+                    this.refreshFrequencyMins = 0;
+                    return;
+                }
+
                 if (this.refreshFrequencyMins != value)
                 {
                     this.refreshFrequencyMins = value;
@@ -147,7 +162,8 @@ namespace BrowserScreenSaver
             {
                 try
                 {
-                    this.WebBrowser.Refresh();
+                    this.WebBrowser.Navigate(this.WebBrowser.Source);
+                    //this.WebBrowser.Refresh();
                     this.RefreshBorder.BorderBrush = Brushes.Transparent;
                 }
                 catch (COMException)
@@ -159,15 +175,23 @@ namespace BrowserScreenSaver
 
         private void ConfigureBrowser()
         {
-            if (!this.loadCompleted)
+            if (!this.loadCompleted || this.browserConfigured)
             {
                 return;
             }
 
-            int scaleLevel = this.IsPreviewMode ? Math.Max(10, this.Scale / 4) : this.Scale; // Between 10 and 1000
-            this.WebBrowser.SetScale(scaleLevel: scaleLevel);
+            this.browserConfigured = true;
+            this.WebBrowser.SetScale(scaleLevel: this.EffectiveScale);
             this.WebBrowser.SetScrollBarVisibility(isVisible: this.IsMaximized);
-            this.WebBrowser.SetSilent(silent: true);
+            this.WebBrowser.SetSilent(silent: !Properties.Settings.Default.AllowPopups);
+
+            // Disable context menu
+            NativeMethods.ICustomDoc doc = this.WebBrowser.Document as NativeMethods.ICustomDoc;
+            doc.SetUIHandler(new DocHostUIHandler(this.WebBrowser, isBrowserContextMenuEnabled: false));
+
+            // Block opening new windows (test -> navigate to msn.com and click on OUTLOOK button)
+            var eventSink = new WebBrowserEventSink(isNewWindowEnabled: false);
+            eventSink.Connect(this.WebBrowser);
 
             // Block any further navigation
             this.WebBrowser.Navigating += delegate(object sender, NavigatingCancelEventArgs args)
@@ -188,7 +212,36 @@ namespace BrowserScreenSaver
                 {
                     args.Cancel = true;
                 }
+
+                SetTimerOnNavigation(args.Uri);
             };
+
+            this.WebBrowser.Navigated += delegate(object sender, NavigationEventArgs args)
+            {
+                try
+                {
+                    var uri = ((dynamic)this.WebBrowser.Document).url;
+                    SetTimerOnNavigation(new Uri(uri));
+                }
+                catch (Exception)
+                {
+                }
+            };
+        }
+
+        void SetTimerOnNavigation(Uri uri)
+        {
+            timer.IsEnabled = false;
+            if (string.Equals(uri.Scheme, "res", StringComparison.OrdinalIgnoreCase))
+            {
+                timer.Interval = TimeSpan.FromSeconds(30);
+                timer.IsEnabled = true;
+            }
+            else if (this.RefreshFrequencyMin > 0)
+            {
+                timer.Interval = TimeSpan.FromMinutes(this.refreshFrequencyMins);
+                timer.IsEnabled = true;
+            }
         }
     }
 }

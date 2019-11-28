@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -11,7 +10,7 @@ namespace BrowserScreenSaver
     /// </summary>
     public partial class SettingsWindow : Window
     {
-        public static TimeSpan EnableNavigationTimeSpan { get;  } = TimeSpan.FromMinutes(1);
+        public static TimeSpan EnableNavigationTimeSpan { get;  } = TimeSpan.FromMinutes(5);
 
         public SettingsWindow()
         {
@@ -21,6 +20,7 @@ namespace BrowserScreenSaver
             this.Uri3.Text = Properties.Settings.Default.Uri3;
             this.Uri4.Text = Properties.Settings.Default.Uri4;
             this.OnResume.IsChecked = Properties.Settings.Default.OnResumeDisplayLogon;
+            this.AllowPopups.IsChecked = Properties.Settings.Default.AllowPopups;
             this.UpdateNavigationEnabledText();
         }
 
@@ -31,6 +31,7 @@ namespace BrowserScreenSaver
             Properties.Settings.Default.Uri3 = SettingsWindow.GetUriSetting(this.Uri3.Text) ?? Properties.Settings.Default.Uri3;
             Properties.Settings.Default.Uri4 = SettingsWindow.GetUriSetting(this.Uri4.Text) ?? Properties.Settings.Default.Uri4;
             Properties.Settings.Default.OnResumeDisplayLogon = this.OnResume.IsChecked ?? true;
+            Properties.Settings.Default.AllowPopups = this.AllowPopups.IsChecked ?? true;
             Properties.Settings.Default.Save();
             this.Close();
         }
