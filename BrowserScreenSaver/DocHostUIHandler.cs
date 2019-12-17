@@ -1,10 +1,5 @@
 ﻿using System;
-using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Security;
 using System.Windows.Controls;
-using Microsoft.Win32;
 
 namespace BrowserScreenSaver
 {

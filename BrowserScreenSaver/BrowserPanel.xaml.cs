@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -30,6 +29,8 @@ namespace BrowserScreenSaver
         public event EventHandler ScaleChanged;
         public event EventHandler MaximizationChanged;
         public event EventHandler RefreshFrequencyChanged;
+
+        private bool IsNavigationEnabled => Properties.Settings.Default.NavigationEnabledByUtc > DateTime.UtcNow;
 
         public bool IsMaximized
         {
@@ -193,11 +194,19 @@ namespace BrowserScreenSaver
             var eventSink = new WebBrowserEventSink(isNewWindowEnabled: false);
             eventSink.Connect(this.WebBrowser);
 
+            this.WebBrowser.MouseDown += delegate (object sender, System.Windows.Input.MouseButtonEventArgs e)
+            {
+                e.Handled = !this.IsNavigationEnabled;
+            };
+
+            this.WebBrowser.KeyDown += delegate (object sender, System.Windows.Input.KeyEventArgs e)
+            {
+                e.Handled = !IsNavigationEnabled;
+            };
+
             // Block any further navigation
             this.WebBrowser.Navigating += delegate(object sender, NavigatingCancelEventArgs args)
             {
-                var navigationEnabled = Properties.Settings.Default.NavigationEnabledByUtc > DateTime.UtcNow;
-
                 //MessageBox.Show($"{args.Uri.Host}, {this.baselineUri.Host}, {args.Uri.AbsolutePath}, {this.baselineUri.AbsolutePath}");
                 var isSafelySimilarUri = string.Equals(args.Uri.Host, baselineUri.Host, StringComparison.OrdinalIgnoreCase)
                                     && (string.Equals(args.Uri.AbsolutePath, baselineUri.AbsolutePath, StringComparison.OrdinalIgnoreCase)
@@ -215,7 +224,7 @@ namespace BrowserScreenSaver
                     }
                 }
 
-                if (navigationEnabled || isSafelySimilarUri || isSafeUri)
+                if (this.IsNavigationEnabled || isSafelySimilarUri || isSafeUri)
                 {
                     args.Cancel = false;
                     this.Address.Text = args.Uri.ToString();
