@@ -68,5 +68,12 @@
     <Setting Name="AllowPopups" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="SafeUris" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://login.microsoftonline.com/
+https://app.vssps.visualstudio.com/_signedin
+https://msazure.vssps.visualstudio.com/_signedin?realm=msazure.visualstudio.com&amp;protocol=wsfederation&amp;reply_to=https:%2F%2Fmsazure.visualstudio.com
+https://app.vssps.visualstudio.com/_signin?realm=msazure.visualstudio.com&amp;reply_to=https:%2F%2Fmsazure.visualstudio.com
+https://msazure.visualstudio.com/_signedin?realm=msazure.visualstudio.com&amp;protocol=wsfederation&amp;reply_to=https:%2F%2Fmsazure.visualstudio.com</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

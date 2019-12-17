@@ -12,7 +12,7 @@ namespace BrowserScreenSaver.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "14.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.3.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -284,6 +284,22 @@ namespace BrowserScreenSaver.Properties {
             }
             set {
                 this["AllowPopups"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(@"https://login.microsoftonline.com/
+https://app.vssps.visualstudio.com/_signedin
+https://msazure.vssps.visualstudio.com/_signedin?realm=msazure.visualstudio.com&protocol=wsfederation&reply_to=https:%2F%2Fmsazure.visualstudio.com
+https://app.vssps.visualstudio.com/_signin?realm=msazure.visualstudio.com&reply_to=https:%2F%2Fmsazure.visualstudio.com
+https://msazure.visualstudio.com/_signedin?realm=msazure.visualstudio.com&protocol=wsfederation&reply_to=https:%2F%2Fmsazure.visualstudio.com")]
+        public string SafeUris {
+            get {
+                return ((string)(this["SafeUris"]));
+            }
+            set {
+                this["SafeUris"] = value;
             }
         }
     }

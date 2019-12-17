@@ -201,15 +201,30 @@ namespace BrowserScreenSaver
                 //MessageBox.Show($"{args.Uri.Host}, {this.baselineUri.Host}, {args.Uri.AbsolutePath}, {this.baselineUri.AbsolutePath}");
                 var isSafelySimilarUri = string.Equals(args.Uri.Host, baselineUri.Host, StringComparison.OrdinalIgnoreCase)
                                     && (string.Equals(args.Uri.AbsolutePath, baselineUri.AbsolutePath, StringComparison.OrdinalIgnoreCase)
-                                    || string.Equals(args.Uri.AbsolutePath, "/", StringComparison.OrdinalIgnoreCase));
+                                        || string.Equals(args.Uri.AbsolutePath, "/", StringComparison.OrdinalIgnoreCase));
 
-                if (navigationEnabled || isSafelySimilarUri)
+                var safeUriPrefixes = Properties.Settings.Default.SafeUris.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                var isSafeUri = false;
+                foreach (var safeUriPrefixText in safeUriPrefixes)
+                {
+                    var safePrefixUri = new Uri(safeUriPrefixText);
+                    if (string.Equals(args.Uri.Host, safePrefixUri.Host, StringComparison.OrdinalIgnoreCase)
+                        && (args.Uri.AbsolutePath.StartsWith(safePrefixUri.AbsolutePath, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        isSafeUri = true;
+                    }
+                }
+
+                if (navigationEnabled || isSafelySimilarUri || isSafeUri)
                 {
                     args.Cancel = false;
                     this.Address.Text = args.Uri.ToString();
+                    this.ErrorMessage.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
+                    this.ErrorMessage.Text = $"Blocked navigation to URI: {args.Uri}";
+                    this.ErrorMessage.Visibility = Visibility.Visible;
                     args.Cancel = true;
                 }
 

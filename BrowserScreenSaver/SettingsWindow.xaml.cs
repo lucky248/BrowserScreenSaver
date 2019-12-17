@@ -21,6 +21,7 @@ namespace BrowserScreenSaver
             this.Uri4.Text = Properties.Settings.Default.Uri4;
             this.OnResume.IsChecked = Properties.Settings.Default.OnResumeDisplayLogon;
             this.AllowPopups.IsChecked = Properties.Settings.Default.AllowPopups;
+            this.SafeUris.Text = Properties.Settings.Default.SafeUris;
             this.UpdateNavigationEnabledText();
         }
 
@@ -32,6 +33,7 @@ namespace BrowserScreenSaver
             Properties.Settings.Default.Uri4 = SettingsWindow.GetUriSetting(this.Uri4.Text) ?? Properties.Settings.Default.Uri4;
             Properties.Settings.Default.OnResumeDisplayLogon = this.OnResume.IsChecked ?? true;
             Properties.Settings.Default.AllowPopups = this.AllowPopups.IsChecked ?? true;
+            Properties.Settings.Default.SafeUris = this.SafeUris.Text;
             Properties.Settings.Default.Save();
             this.Close();
         }
@@ -67,7 +69,23 @@ namespace BrowserScreenSaver
         {
             this.NavigationEnabledTextBlock.Text = Properties.Settings.Default.NavigationEnabledByUtc > DateTime.UtcNow
                 ? $"Enabled until {Properties.Settings.Default.NavigationEnabledByUtc.ToLocalTime()}"
-                : "Browser navigation is disabled";
+                : "Browser navigation is disabled. Use 'Safe site prefixes' or temporary enable navigation to handle login pages.";
+        }
+
+        private void SafeUri_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = (TextBox)sender;
+            var border = (Border)textBox.Parent;
+
+            var uris = textBox.Text.Split(new [] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var errorFound = false;
+            foreach(var uri in uris)
+            {
+                errorFound |= SettingsWindow.GetUriSetting(uri) == null;
+            }
+
+            // Validate if specified URI is valid
+            border.BorderBrush = errorFound ? Brushes.Red : Brushes.Transparent;
         }
 
         private void Uri_TextChanged(object sender, TextChangedEventArgs e)
@@ -75,6 +93,7 @@ namespace BrowserScreenSaver
             var textBox = (TextBox)sender;
             var border = (Border)textBox.Parent;
 
+            // Validate if specified URI is valid
             border.BorderBrush = SettingsWindow.GetUriSetting(textBox.Text) == null ? Brushes.Red : Brushes.Transparent;
         }
     }

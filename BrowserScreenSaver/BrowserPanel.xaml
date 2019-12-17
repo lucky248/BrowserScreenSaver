@@ -9,6 +9,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid Name="TitleBarPanel" >
@@ -66,6 +67,7 @@
                 Width="70"
                 Click="MaximizeToggleButton_Click" />
         </Grid>
-        <WebBrowser Grid.Row="1" Name="WebBrowser" LoadCompleted="WebBrowser_OnLoadCompleted"/>
+        <TextBox Grid.Row="1" Name ="ErrorMessage" Visibility="Collapsed" IsReadOnly="True" Background="LightSalmon"/>
+        <WebBrowser Grid.Row="2" Name="WebBrowser" LoadCompleted="WebBrowser_OnLoadCompleted"/>
     </Grid>
 </UserControl>
