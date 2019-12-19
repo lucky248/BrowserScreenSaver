@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -87,6 +88,7 @@ namespace BrowserScreenSaver
             panel.ScaleChanged += Browser_OnScaleChanged;
             panel.RefreshFrequencyChanged += Browser_OnRefreshFrequencyChanged;
             panel.MaximizationChanged += Browser_OnMaximizationChanged;
+            panel.SafeUriAdded += Browser_SafeUriAdded;
             Uri uri;
             if (Uri.TryCreate((string)Settings.Default[this.GetUriPropertyName(panel)], UriKind.Absolute, out uri))
             {
@@ -94,16 +96,33 @@ namespace BrowserScreenSaver
             }
         }
 
+        private void Browser_SafeUriAdded(object sender, List<Uri> safeUris)
+        {
+            string safeUriSting = string.Join(Environment.NewLine, safeUris);
+            if(string.IsNullOrEmpty(Settings.Default.SafeUris))
+            {
+                Settings.Default.SafeUris = safeUriSting;
+
+            }
+            else
+            {
+                Settings.Default.SafeUris += Environment.NewLine + safeUriSting;
+            }
+            Settings.Default.Save();
+        }
+
         private void Browser_OnScaleChanged(object sender, EventArgs eventArgs)
         {
             var panel = (BrowserPanel)sender;
             Settings.Default[this.GetScalePropertyName(panel)] = panel.Scale;
+            Settings.Default.Save();
         }
 
         private void Browser_OnRefreshFrequencyChanged(object sender, EventArgs eventArgs)
         {
             var panel = (BrowserPanel)sender;
             Settings.Default[this.GetRefreshFrequencyPropertyName(panel)] = panel.RefreshFrequencyMin;
+            Settings.Default.Save();
         }
 
         private void Browser_OnMaximizationChanged(object sender, EventArgs eventArgs)

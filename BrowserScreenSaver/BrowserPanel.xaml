@@ -67,7 +67,14 @@
                 Width="70"
                 Click="MaximizeToggleButton_Click" />
         </Grid>
-        <TextBox Grid.Row="1" Name ="ErrorMessage" Visibility="Collapsed" IsReadOnly="True" Background="LightSalmon"/>
+        <Grid Grid.Row="1" Name="ErrorPanel" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Name ="ErrorMessage" IsReadOnly="True" Background="LightSalmon"/>
+            <Button Grid.Column="1" Name ="AddSafeUri" Content="Add to 'Safe URIs'" Click="AddToSafeUriButton_Click" />
+        </Grid>
         <WebBrowser Grid.Row="2" Name="WebBrowser" LoadCompleted="WebBrowser_OnLoadCompleted"/>
     </Grid>
 </UserControl>
