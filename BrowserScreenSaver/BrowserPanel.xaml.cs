@@ -24,15 +24,18 @@ namespace BrowserScreenSaver
         private int refreshFrequencyMins;
         private readonly DispatcherTimer timer;
         private Uri baselineUri;
+        private List<Uri> errorMessageUris = new List<Uri>();
 
+        private bool IsNavigationEnabled => this.NavigationEnabledByUtc > DateTime.UtcNow;
 
         public event EventHandler ScaleChanged;
         public event EventHandler MaximizationChanged;
         public event EventHandler RefreshFrequencyChanged;
         public event EventHandler<List<Uri>> SafeUriAdded;
 
-        private bool IsNavigationEnabled => Properties.Settings.Default.NavigationEnabledByUtc > DateTime.UtcNow;
 
+        public DateTime NavigationEnabledByUtc { get; set; }
+        public IReadOnlyCollection<Uri> SafeUris { get; set; }
         public bool IsMaximized
         {
             get { return this.isMaximized; }
@@ -117,12 +120,7 @@ namespace BrowserScreenSaver
             this.RefreshFrequency.Items.Add(new KeyValuePair<int, string>(60, "1 hour"));
             this.RefreshFrequency.Items.Add(new KeyValuePair<int, string>(60 * 4, "4 hours"));
             this.RefreshFrequency.Items.Add(new KeyValuePair<int, string>(60 * 8, "8 hours"));
-
             this.timer = new DispatcherTimer();
-            this.timer.Tick += (sender, args) =>
-            {
-                RefreshBrowser();
-            };
         }
 
         public void Navigate(Uri source)
@@ -164,7 +162,7 @@ namespace BrowserScreenSaver
             {
                 try
                 {
-                    this.ErrorMessage.Tag = null;
+                    this.ClearErrorMessageUri();
                     //this.WebBrowser.Navigate(this.WebBrowser.Source);
                     //this.WebBrowser.Refresh();
                     this.WebBrowser.Navigate(this.baselineUri);
@@ -185,9 +183,15 @@ namespace BrowserScreenSaver
             }
 
             this.browserConfigured = true;
+            this.timer.Tick += (sender, args) =>
+            {
+                RefreshBrowser();
+            };
+
             this.WebBrowser.SetScale(scaleLevel: this.EffectiveScale);
             this.WebBrowser.SetScrollBarVisibility(isVisible: this.IsMaximized);
-            this.WebBrowser.SetSilent(silent: !Properties.Settings.Default.AllowPopups);
+            ////this.WebBrowser.SetSilent(silent: !this.IsNavigationEnabled);
+            this.WebBrowser.SetSilent(silent: true);
 
             // Disable context menu
             NativeMethods.ICustomDoc doc = this.WebBrowser.Document as NativeMethods.ICustomDoc;
@@ -213,11 +217,9 @@ namespace BrowserScreenSaver
                 var isSafelySimilarUri = string.Equals(args.Uri.Host, baselineUri.Host, StringComparison.OrdinalIgnoreCase)
                                     && (string.Equals(args.Uri.AbsolutePath, baselineUri.AbsolutePath, StringComparison.OrdinalIgnoreCase));
 
-                var safeUriPrefixes = Properties.Settings.Default.SafeUris.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 var isSafeUri = false;
-                foreach (var safeUriPrefixText in safeUriPrefixes)
+                foreach (var safePrefixUri in this.SafeUris)
                 {
-                    var safePrefixUri = new Uri(safeUriPrefixText);
                     if (args.Uri.ToString().StartsWith(safePrefixUri.ToString()))
                     {
                         isSafeUri = true;
@@ -238,12 +240,12 @@ namespace BrowserScreenSaver
                 else
                 {
                     this.ErrorMessage.Text = $"Blocked navigation to URI: {args.Uri}";
-                    this.ErrorMessage.Tag = args.Uri;
+                    this.errorMessageUris.Add(args.Uri);
                     args.Cancel = true;
                 }
 
                 // Enable Add button if navigation is enabled
-                if (this.ErrorMessage.Tag == null)
+                if (errorMessageUris.Count == 0)
                 {
                     this.ErrorPanel.Visibility = Visibility.Collapsed;
                 }
@@ -269,35 +271,25 @@ namespace BrowserScreenSaver
             };
         }
 
-        void ClearSkipUri()
+        void ClearErrorMessageUri()
         {
+            this.errorMessageUris.Clear();
             this.ErrorPanel.Visibility = Visibility.Collapsed;
             this.ErrorMessage.Text = string.Empty;
-            this.ErrorMessage.Tag = null;
         }
 
         void AppendTemporaryAllowedUri(Uri uri)
         {
-            var uriList = this.ErrorMessage.Tag as List<Uri>;
-            if(uriList == null)
-            {
-                uriList = new List<Uri>();
-                this.ErrorMessage.Tag = uriList;
-            }
-
             // Don't add duplicates
-            if(!uriList.Contains(uri))
+            if (!errorMessageUris.Contains(uri))
             {
-                uriList.Add(uri);
+                errorMessageUris.Add(uri);
             }
 
-            if (uriList.Count > 0)
+            this.ErrorMessage.Text = $"Temporarily allowed navigation to URI: {uri}";
+            for (int i = 1; i < errorMessageUris.Count; i++)
             {
-                this.ErrorMessage.Text = $"Temporarily allowed navigation to URI: {uriList[0]}";
-                for (int i = 1; i < uriList.Count; i++)
-                {
-                    this.ErrorMessage.Text += Environment.NewLine + uriList[i];
-                }
+                this.ErrorMessage.Text += Environment.NewLine + errorMessageUris[i];
             }
         }
 
@@ -318,13 +310,11 @@ namespace BrowserScreenSaver
 
         private void AddToSafeUriButton_Click(object sender, RoutedEventArgs e)
         {
-            var tag = this.ErrorMessage.Tag as List<Uri>;
-            this.ErrorMessage.Tag = null;
             this.ErrorMessage.Text = string.Empty;
             this.ErrorPanel.Visibility = Visibility.Hidden;
-            if (tag != null)
+            if (errorMessageUris.Count > 0)
             {
-                this.SafeUriAdded?.Invoke(this, tag);
+                this.SafeUriAdded?.Invoke(this, errorMessageUris);
                 this.RefreshBrowser();
             }
         }

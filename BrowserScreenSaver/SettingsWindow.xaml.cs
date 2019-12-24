@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -11,30 +13,41 @@ namespace BrowserScreenSaver
     public partial class SettingsWindow : Window
     {
         public static TimeSpan EnableNavigationTimeSpan { get;  } = TimeSpan.FromMinutes(5);
+        
+        private AppConfiguration.SharedConfiguration sharedConfig;
+        
+        private IReadOnlyList<AppConfiguration.PaneConfiguration> paneConfig;
 
         public SettingsWindow()
         {
             InitializeComponent();
-            this.Uri1.Text = Properties.Settings.Default.Uri1;
-            this.Uri2.Text = Properties.Settings.Default.Uri2;
-            this.Uri3.Text = Properties.Settings.Default.Uri3;
-            this.Uri4.Text = Properties.Settings.Default.Uri4;
-            this.OnResume.IsChecked = Properties.Settings.Default.OnResumeDisplayLogon;
-            this.AllowPopups.IsChecked = Properties.Settings.Default.AllowPopups;
-            this.SafeUris.Text = Properties.Settings.Default.SafeUris;
+        }
+
+        public void InitializeConfig(AppConfiguration.SharedConfiguration sharedConfig, IReadOnlyList<AppConfiguration.PaneConfiguration> paneConfig)
+        {
+            this.paneConfig = paneConfig;
+            this.sharedConfig = sharedConfig;
+            this.Uri1.Text = paneConfig[0].Uri;
+            this.Uri2.Text = paneConfig[1].Uri;
+            this.Uri3.Text = paneConfig[2].Uri;
+            this.Uri4.Text = paneConfig[3].Uri;
+            this.OnResume.IsChecked = sharedConfig.OnResumeDisplayLogon;
+            this.SafeUris.Text = string.Join(Environment.NewLine, sharedConfig.SafeUris.Select(u => u.ToString()).ToArray());
             this.UpdateNavigationEnabledText();
         }
 
         private void OKButton_OnClick(object sender, RoutedEventArgs e)
         {
-            Properties.Settings.Default.Uri1 = SettingsWindow.GetUriSetting(this.Uri1.Text) ?? Properties.Settings.Default.Uri1;
-            Properties.Settings.Default.Uri2 = SettingsWindow.GetUriSetting(this.Uri2.Text) ?? Properties.Settings.Default.Uri2;
-            Properties.Settings.Default.Uri3 = SettingsWindow.GetUriSetting(this.Uri3.Text) ?? Properties.Settings.Default.Uri3;
-            Properties.Settings.Default.Uri4 = SettingsWindow.GetUriSetting(this.Uri4.Text) ?? Properties.Settings.Default.Uri4;
-            Properties.Settings.Default.OnResumeDisplayLogon = this.OnResume.IsChecked ?? true;
-            Properties.Settings.Default.AllowPopups = this.AllowPopups.IsChecked ?? true;
-            Properties.Settings.Default.SafeUris = this.SafeUris.Text;
-            Properties.Settings.Default.Save();
+            // Only persist values back upon "OK"
+            paneConfig[0].Uri = SettingsWindow.GetUriSetting(this.Uri1.Text) ?? paneConfig[0].Uri;
+            paneConfig[1].Uri = SettingsWindow.GetUriSetting(this.Uri2.Text) ?? paneConfig[1].Uri;
+            paneConfig[2].Uri = SettingsWindow.GetUriSetting(this.Uri3.Text) ?? paneConfig[2].Uri;
+            paneConfig[3].Uri = SettingsWindow.GetUriSetting(this.Uri4.Text) ?? paneConfig[3].Uri;
+
+            sharedConfig.OnResumeDisplayLogon = this.OnResume.IsChecked ?? true;
+            sharedConfig.SafeUris.Clear();
+            var uris = this.SafeUris.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(s => new Uri(s, UriKind.Absolute)).ToArray();
+            sharedConfig.SafeUris.AddRange(uris);
             this.Close();
         }
 
@@ -61,14 +74,14 @@ namespace BrowserScreenSaver
 
         private void EnableNavigationBtn_Click(object sender, RoutedEventArgs e)
         {
-            Properties.Settings.Default.NavigationEnabledByUtc = DateTime.UtcNow + SettingsWindow.EnableNavigationTimeSpan;
+            this.sharedConfig.NavigationEnabledByUtc = DateTime.UtcNow + SettingsWindow.EnableNavigationTimeSpan;
             UpdateNavigationEnabledText();
         }
 
         private void UpdateNavigationEnabledText()
         {
-            this.NavigationEnabledTextBlock.Text = Properties.Settings.Default.NavigationEnabledByUtc > DateTime.UtcNow
-                ? $"Enabled until {Properties.Settings.Default.NavigationEnabledByUtc.ToLocalTime()}"
+            this.NavigationEnabledTextBlock.Text = this.sharedConfig.NavigationEnabledByUtc > DateTime.UtcNow
+                ? $"Enabled until {this.sharedConfig.NavigationEnabledByUtc.ToLocalTime()}"
                 : "Browser navigation is disabled. Use 'Safe site prefixes' or temporary enable navigation to handle login pages.";
         }
 
