@@ -62,22 +62,12 @@ namespace BrowserScreenSaver
             }
             else if (e.Args[0].ToLower().StartsWith("/s"))
             {
-                var win = new MainWindow { WindowState = WindowState.Maximized };
-                win.ConfigurationChanged += delegate
-                {
-                    var newConfig = config.ToString();
-                    if (!string.Equals(Settings.Default.Config, newConfig, StringComparison.Ordinal))
-                    {
-                        Settings.Default.Save();
-                    }
-                };
-                win.InitializeConfig(config.SharedConfig, new[] { config.Panes[0], config.Panes[1], config.Panes[2], config.Panes[3] });
-                win.Show();
+                LaunchScreensaverWindows(config);
             }
             else if (e.Args[0].ToLower().StartsWith("/c"))
             {
                 var win = new SettingsWindow();
-                win.InitializeConfig(config.SharedConfig, config.Panes);
+                win.InitializeConfig(config.SharedConfig, config.Windows[0]);
                 win.Closed += delegate
                 {
                     Settings.Default.Config = config.ToString();
@@ -88,6 +78,27 @@ namespace BrowserScreenSaver
             else
             {
                 Application.Current.Shutdown();
+            }
+        }
+
+        private static void LaunchScreensaverWindows(AppConfiguration config)
+        {
+            var win = new MainWindow { WindowState = WindowState.Maximized };
+            win.ConfigurationChanged += delegate
+            {
+                // Lots of false-positives on resize events. Go easy on Settings.Default.Save()
+                var newConfig = config.ToString();
+                if (!string.Equals(Settings.Default.Config, newConfig, StringComparison.Ordinal))
+                {
+                    Settings.Default.Save();
+                }
+            };
+            win.InitializeConfig(config.SharedConfig, config.Windows[0]);
+            win.Show();
+
+            if(System.Windows.Forms.Screen.AllScreens.Length > 1)
+            {
+
             }
         }
 

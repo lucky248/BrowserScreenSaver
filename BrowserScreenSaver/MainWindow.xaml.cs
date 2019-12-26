@@ -16,8 +16,8 @@ namespace BrowserScreenSaver
     public partial class MainWindow : Window
     {
         private bool isPreviewMode;
-        private bool initialized = false;
         private AppConfiguration.SharedConfiguration sharedConfig;
+        private AppConfiguration.WindowConfiguration windowConfig;
 
         public bool IsPreviewMode
         {
@@ -44,34 +44,34 @@ namespace BrowserScreenSaver
             InitializeComponent();
         }
 
-        public void InitializeConfig(AppConfiguration.SharedConfiguration sharedConfig, AppConfiguration.PaneConfiguration[] paneConfig)
+        public void InitializeConfig(AppConfiguration.SharedConfiguration sharedConfig, AppConfiguration.WindowConfiguration windowConfiguration)
         {
-            if(initialized)
+            if(this.sharedConfig != null)
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("Window is already initialized");
             }
 
-            this.initialized = true;
             this.sharedConfig = sharedConfig;
+            this.windowConfig = windowConfiguration;
             var rowDefinitions = this.MainGrid.RowDefinitions;
-            var topPanelHeight = (int)(sharedConfig.HorizontalSplitter * 100);
+            var topPanelHeight = (int)(windowConfiguration.HorizontalSplitter * 100);
             rowDefinitions[0].Height = new GridLength(value: topPanelHeight, type: GridUnitType.Star);
             rowDefinitions[2].Height = new GridLength(value: 100 - topPanelHeight, type: GridUnitType.Star);
 
             var topColumnsDefinitions = this.TopGrid.ColumnDefinitions;
-            var topLeftPanelWidth = (int)(sharedConfig.TopVerticalSplitter * 100);
+            var topLeftPanelWidth = (int)(windowConfiguration.TopVerticalSplitter * 100);
             topColumnsDefinitions[0].Width = new GridLength(value: topLeftPanelWidth, type: GridUnitType.Star);
             topColumnsDefinitions[2].Width = new GridLength(value: 100 - topLeftPanelWidth, type: GridUnitType.Star);
 
             var bottomColumnsDefinitions = this.BottomGrid.ColumnDefinitions;
-            var bottomLeftPanelWidth = (int)(sharedConfig.BottomVerticalSplitter * 100);
+            var bottomLeftPanelWidth = (int)(windowConfiguration.BottomVerticalSplitter * 100);
             bottomColumnsDefinitions[0].Width = new GridLength(value: bottomLeftPanelWidth, type: GridUnitType.Star);
             bottomColumnsDefinitions[2].Width = new GridLength(value: 100 - bottomLeftPanelWidth, type: GridUnitType.Star);
 
-            InitializePanel(this.TopLeftBrowser, paneConfig[0]);
-            InitializePanel(this.TopRightBrowser, paneConfig[1]);
-            InitializePanel(this.BottomLeftBrowser, paneConfig[2]);
-            InitializePanel(this.BottomRightBrowser, paneConfig[3]);
+            InitializePanel(this.TopLeftBrowser, windowConfiguration.Panes[0]);
+            InitializePanel(this.TopRightBrowser, windowConfiguration.Panes[1]);
+            InitializePanel(this.BottomLeftBrowser, windowConfiguration.Panes[2]);
+            InitializePanel(this.BottomRightBrowser, windowConfiguration.Panes[3]);
 
             if (sharedConfig.NavigationEnabledByUtc > DateTime.UtcNow)
             {
@@ -176,9 +176,9 @@ namespace BrowserScreenSaver
             var topHeight = this.TopLeftBrowser.ActualHeight;
             var topLeftWidth = this.TopLeftBrowser.ActualWidth;
             var bottomLeftWidth = this.BottomLeftBrowser.ActualWidth;
-            this.sharedConfig.HorizontalSplitter = topHeight / (topHeight + this.BottomLeftBrowser.ActualHeight);
-            this.sharedConfig.TopVerticalSplitter = topLeftWidth / (topLeftWidth + this.TopRightBrowser.ActualWidth);
-            this.sharedConfig.BottomVerticalSplitter = bottomLeftWidth / (bottomLeftWidth + this.BottomRightBrowser.ActualWidth);
+            this.windowConfig.HorizontalSplitter = topHeight / (topHeight + this.BottomLeftBrowser.ActualHeight);
+            this.windowConfig.TopVerticalSplitter = topLeftWidth / (topLeftWidth + this.TopRightBrowser.ActualWidth);
+            this.windowConfig.BottomVerticalSplitter = bottomLeftWidth / (bottomLeftWidth + this.BottomRightBrowser.ActualWidth);
             this.ConfigurationChanged.Invoke(this, EventArgs.Empty);
         }
 

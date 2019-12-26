@@ -10,9 +10,6 @@ namespace BrowserScreenSaver
     {
         public class SharedConfiguration
         {
-            public double TopVerticalSplitter { get; set; } = 0.5;
-            public double BottomVerticalSplitter { get; set; } = 0.5;
-            public double HorizontalSplitter { get; set; } = 0.5;
             public bool OnResumeDisplayLogon { get; set; } = true;
             public DateTime NavigationEnabledByUtc { get; set; } = new DateTime(year: 2000, month: 1, day: 1);
             public List<Uri> SafeUris { get; } = new List<Uri>();
@@ -21,32 +18,67 @@ namespace BrowserScreenSaver
         public class PaneConfiguration
         {
             public string Uri { get; set; }
-            public int RefreshFreq { get; set; } = -1;
-            public int Scale { get; set; } = 100;
-            public int ScaleMaximized { get; set; } = 100;
+            public int RefreshFreq { get; set; }
+            public int Scale { get; set; }
+            public int ScaleMaximized { get; set; }
+
+            public PaneConfiguration(string uri=null, int refreshFreq=-1, int scale=100, int scaleMaximized=100)
+            {
+                this.Uri = uri;
+                this.RefreshFreq = refreshFreq;
+                this.Scale = scale;
+                this.ScaleMaximized = scaleMaximized;
+            }
+        }
+
+        public class WindowConfiguration
+        {
+            public double TopVerticalSplitter { get; set; }
+            public double BottomVerticalSplitter { get; set; }
+            public double HorizontalSplitter { get; set; }
+            public IReadOnlyList<PaneConfiguration> Panes{ get; }
+
+            public WindowConfiguration(
+                double topVerticalSplitter = 0.5, 
+                double bottomVerticalSplitter = 0.5, 
+                double horizontalSplitter = 0.5,
+                PaneConfiguration[] panes = null)
+            {
+                this.TopVerticalSplitter = topVerticalSplitter;
+                this.BottomVerticalSplitter = bottomVerticalSplitter;
+                this.HorizontalSplitter = horizontalSplitter;
+
+                panes = panes ?? new PaneConfiguration[4];
+                if(panes.Length != 4)
+                {
+                    throw new InvalidOperationException($"Expected 4 panes, but constructed with {panes.Length}.");
+                }
+
+                for (int i = 0; i < panes.Length; i++)
+                {
+                    panes[i] = panes[i] ?? new PaneConfiguration();
+                }
+
+                this.Panes = panes;
+            }
         }
 
         public SharedConfiguration SharedConfig { get; } = new SharedConfiguration();
-        public IReadOnlyList<PaneConfiguration> Panes { get; }
+
+        public List<WindowConfiguration> Windows { get; }
 
         public AppConfiguration()
         {
-            var panes = new PaneConfiguration[8];
-            for(int i=0; i< panes.Length; i++)
-            {
-                panes[i] = new PaneConfiguration();
-            }
-
-            this.Panes = panes;
+            var windows = new List<WindowConfiguration>();
+            windows.Add(new WindowConfiguration());
+            windows.Add(new WindowConfiguration());
+            this.Windows = windows;
         }
 
         public override string ToString()
         {
             var sb = new StringBuilder();
             sb.AppendLine("v1");
-            sb.AppendLine(this.SharedConfig.TopVerticalSplitter.ToString());
-            sb.AppendLine(this.SharedConfig.BottomVerticalSplitter.ToString());
-            sb.AppendLine(this.SharedConfig.HorizontalSplitter.ToString());
             sb.AppendLine(this.SharedConfig.OnResumeDisplayLogon.ToString());
             sb.AppendLine(this.SharedConfig.NavigationEnabledByUtc.ToString());
             sb.AppendLine(this.SharedConfig.SafeUris.Count.ToString());
@@ -55,12 +87,20 @@ namespace BrowserScreenSaver
                 sb.AppendLine(Convert.ToBase64String(Encoding.Unicode.GetBytes(uri.ToString())));
             }
 
-            foreach (var pane in this.Panes)
+            sb.AppendLine(this.Windows.Count.ToString());
+            foreach (var window in this.Windows)
             {
-                sb.AppendLine(Convert.ToBase64String(Encoding.Unicode.GetBytes(pane.Uri ?? string.Empty)));
-                sb.AppendLine(pane.RefreshFreq.ToString());
-                sb.AppendLine(pane.Scale.ToString());
-                sb.AppendLine(pane.ScaleMaximized.ToString());
+                sb.AppendLine(window.TopVerticalSplitter.ToString());
+                sb.AppendLine(window.BottomVerticalSplitter.ToString());
+                sb.AppendLine(window.HorizontalSplitter.ToString());
+                sb.AppendLine(window.Panes.Count.ToString());
+                foreach (var pane in window.Panes)
+                {
+                    sb.AppendLine(Convert.ToBase64String(Encoding.Unicode.GetBytes(pane.Uri ?? string.Empty)));
+                    sb.AppendLine(pane.RefreshFreq.ToString());
+                    sb.AppendLine(pane.Scale.ToString());
+                    sb.AppendLine(pane.ScaleMaximized.ToString());
+                }
             }
             return sb.ToString();
         }
@@ -75,9 +115,6 @@ namespace BrowserScreenSaver
 
             var values = value.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
             var valueIndex = 1;
-            config.SharedConfig.TopVerticalSplitter = double.Parse(values[valueIndex++]);
-            config.SharedConfig.BottomVerticalSplitter = double.Parse(values[valueIndex++]);
-            config.SharedConfig.HorizontalSplitter = double.Parse(values[valueIndex++]);
             config.SharedConfig.OnResumeDisplayLogon = bool.Parse(values[valueIndex++]);
             config.SharedConfig.NavigationEnabledByUtc = DateTime.Parse(values[valueIndex++]);
             var uriCount = int.Parse(values[valueIndex++]);
@@ -87,14 +124,43 @@ namespace BrowserScreenSaver
                 config.SharedConfig.SafeUris.Add(safeUri);
             }
 
-            foreach (var pane in config.Panes)
+            int windowCount = int.Parse(values[valueIndex++]);
+            if (windowCount != 2)
             {
-                pane.Uri = Encoding.Unicode.GetString(Convert.FromBase64String(values[valueIndex++]));
-                pane.RefreshFreq = int.Parse(values[valueIndex++]);
-                pane.Scale = int.Parse(values[valueIndex++]);
-                pane.ScaleMaximized = int.Parse(values[valueIndex++]);
+                throw new InvalidOperationException($"Expected 2 windows, but found {windowCount}");
             }
-         
+
+            var windows = new WindowConfiguration[windowCount];
+            for (int i= 0; i < windowCount; i++)
+            {
+                var topVerticalSplitter = double.Parse(values[valueIndex++]);
+                var bottomVerticalSplitter = double.Parse(values[valueIndex++]);
+                var horizontalSplitter = double.Parse(values[valueIndex++]);
+
+                int paneCount = int.Parse(values[valueIndex++]);
+                if(paneCount != 4)
+                {
+                    throw new InvalidOperationException($"Expected 4 panes, but found {paneCount}");
+                }
+
+                var panes = new PaneConfiguration[paneCount];
+                for (int j = 0; j < panes.Length; j++)
+                {
+                    var uri = Encoding.Unicode.GetString(Convert.FromBase64String(values[valueIndex++]));
+                    var refreshFreq = int.Parse(values[valueIndex++]);
+                    var scale = int.Parse(values[valueIndex++]);
+                    var scaleMaximized = int.Parse(values[valueIndex++]);
+                    panes[j] = new PaneConfiguration(uri: uri, refreshFreq: refreshFreq, scale: scale, scaleMaximized: scaleMaximized);
+                }
+
+                windows[i] = new WindowConfiguration(
+                    topVerticalSplitter: topVerticalSplitter, 
+                    bottomVerticalSplitter: bottomVerticalSplitter, 
+                    horizontalSplitter: horizontalSplitter,
+                    panes: panes);
+            }
+            config.Windows.Clear();
+            config.Windows.AddRange(windows);
             return config;
         }
     }

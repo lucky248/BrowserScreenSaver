@@ -23,9 +23,9 @@ namespace BrowserScreenSaver
             InitializeComponent();
         }
 
-        public void InitializeConfig(AppConfiguration.SharedConfiguration sharedConfig, IReadOnlyList<AppConfiguration.PaneConfiguration> paneConfig)
+        public void InitializeConfig(AppConfiguration.SharedConfiguration sharedConfig, AppConfiguration.WindowConfiguration windowConfiguration)
         {
-            this.paneConfig = paneConfig;
+            this.paneConfig = windowConfiguration.Panes;
             this.sharedConfig = sharedConfig;
             this.Uri1.Text = paneConfig[0].Uri;
             this.Uri2.Text = paneConfig[1].Uri;
