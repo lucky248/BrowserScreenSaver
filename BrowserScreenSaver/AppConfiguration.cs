@@ -8,6 +8,8 @@ namespace BrowserScreenSaver
 {
     public class AppConfiguration
     {
+        public const int SupportedWindowCount = 3; // Config UX is hardcoded to this number of windows
+
         public class SharedConfiguration
         {
             public bool OnResumeDisplayLogon { get; set; } = true;
@@ -70,8 +72,10 @@ namespace BrowserScreenSaver
         public AppConfiguration()
         {
             var windows = new List<WindowConfiguration>();
-            windows.Add(new WindowConfiguration());
-            windows.Add(new WindowConfiguration());
+            for (int i = 0; i < AppConfiguration.SupportedWindowCount; i++)
+            {
+                windows.Add(new WindowConfiguration());
+            }
             this.Windows = windows;
         }
 
@@ -125,9 +129,9 @@ namespace BrowserScreenSaver
             }
 
             int windowCount = int.Parse(values[valueIndex++]);
-            if (windowCount != 2)
+            if (windowCount != AppConfiguration.SupportedWindowCount)
             {
-                throw new InvalidOperationException($"Expected 2 windows, but found {windowCount}");
+                throw new InvalidOperationException($"Expected {AppConfiguration.SupportedWindowCount} windows, but found {windowCount}");
             }
 
             var windows = new WindowConfiguration[windowCount];

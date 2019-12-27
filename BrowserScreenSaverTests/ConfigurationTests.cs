@@ -11,7 +11,7 @@ namespace BrowserScreenSaverTests
         public void ConfigurationDefaultTest()
         {
             var config = AppConfiguration.FromString(null);
-            Assert.AreEqual(2, config.Windows.Count);
+            Assert.AreEqual(AppConfiguration.SupportedWindowCount, config.Windows.Count);
             Assert.AreEqual(4, config.Windows[0].Panes.Count);
             Assert.AreEqual(4, config.Windows[1].Panes.Count);
 
@@ -21,7 +21,27 @@ namespace BrowserScreenSaverTests
 True
 1/1/2000 12:00:00 AM
 0
-2
+3
+0.5
+0.5
+0.5
+4
+
+-1
+100
+100
+
+-1
+100
+100
+
+-1
+100
+100
+
+-1
+100
+100
 0.5
 0.5
 0.5
@@ -67,7 +87,7 @@ True
         }
 
         [TestMethod]
-        public void ConfigurationTest()
+        public void ConfigurationRoundtripTest()
         {
             AppConfiguration appConfig = new AppConfiguration();
             appConfig.SharedConfig.OnResumeDisplayLogon = true;
@@ -101,7 +121,7 @@ True
 2
 aAB0AHQAcAA6AC8ALwBvAG4AZQAuAHQAdwBvAC8AMwA/ADQA
 aAB0AHQAcAA6AC8ALwBmAGkAYwBlAC4AcwBpAHgALwA3AD8AOAA=
-2
+3
 0
 0
 0
@@ -142,6 +162,26 @@ aAB0AHQAcABzADoALwAvAG4AaQBuAGUALgBjAG8AbQAvADEAMAA/ADIA
 31
 34
 37
+0.6
+0.2
+0.4
+4
+
+2
+2
+2
+aAB0AHQAcABzADoALwAvAG4AaQBuAGUALgBjAG8AbQAvADEAMAA/ADEA
+12
+13
+14
+aAB0AHQAcABzADoALwAvAG4AaQBuAGUALgBjAG8AbQAvADEAMAA/ADIA
+22
+24
+26
+
+32
+35
+38
 ";
 
             Assert.AreEqual(rawValue, serialized1);

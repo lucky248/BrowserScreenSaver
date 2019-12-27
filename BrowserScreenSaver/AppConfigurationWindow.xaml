@@ -1,0 +1,150 @@
+﻿<Window x:Class="BrowserScreenSaver.AppConfigurationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BrowserScreenSaver"
+        mc:Ignorable="d"
+        Title="Browser Screensaver Settings" Height="450" Width="600">
+    <Grid  Margin="6">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TabControl x:Name="tabControl" Grid.Row="0" Grid.ColumnSpan="2" Height="170">
+            <TabItem Header="Monitor 1">
+                <Grid  Margin="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Row="2" Grid.Column="0" Content="URI 1:"/>
+                    <Border Grid.Row="2" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor1Uri1" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                    <Label Grid.Row="4" Grid.Column="0" Content="URI 2:"/>
+                    <Border Grid.Row="4" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor1Uri2" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                    <Label Grid.Row="6" Grid.Column="0" Content="URI 3:"/>
+                    <Border Grid.Row="6" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor1Uri3" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                    <Label Grid.Row="8" Grid.Column="0" Content="URI 4:"/>
+                    <Border Grid.Row="8" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor1Uri4" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Monitor 2">
+                <Grid  Margin="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Row="2" Grid.Column="0" Content="URI 1:"/>
+                    <Border Grid.Row="2" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor2Uri1" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                    <Label Grid.Row="4" Grid.Column="0" Content="URI 2:"/>
+                    <Border Grid.Row="4" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor2Uri2" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                    <Label Grid.Row="6" Grid.Column="0" Content="URI 3:"/>
+                    <Border Grid.Row="6" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor2Uri3" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                    <Label Grid.Row="8" Grid.Column="0" Content="URI 4:"/>
+                    <Border Grid.Row="8" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor2Uri4" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Monitor 3">
+                <Grid  Margin="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Row="2" Grid.Column="0" Content="URI 1:"/>
+                    <Border Grid.Row="2" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor3Uri1" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                    <Label Grid.Row="4" Grid.Column="0" Content="URI 2:"/>
+                    <Border Grid.Row="4" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor3Uri2" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                    <Label Grid.Row="6" Grid.Column="0" Content="URI 3:"/>
+                    <Border Grid.Row="6" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor3Uri3" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                    <Label Grid.Row="8" Grid.Column="0" Content="URI 4:"/>
+                    <Border Grid.Row="8" Grid.Column="1" BorderThickness="1">
+                        <TextBox Name="Monitor3Uri4" TextChanged="Uri_TextChanged"/>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>        
+        <TextBlock Grid.Row="2" Text="Safe URI prefixes:" TextWrapping="Wrap"/>
+        <Border Grid.Row="3" BorderThickness="1">
+            <TextBox Name="SafeUris" AcceptsReturn="True" Height="100" TextChanged="SafeUri_TextChanged"/>
+        </Border>
+        <CheckBox Grid.Row="5" Name="OnResume" Content="On resume, display logon screen"/>
+        <Grid Grid.Row="7">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button Name="EnableNavigationBtn" VerticalAlignment="Top" Content="Enable browser navigation for 5 mins" Click="EnableNavigationBtn_Click"/>
+            <TextBlock Name="NavigationEnabledTextBlock" Grid.Column="1" Text="status" Margin="4,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+        </Grid>
+        <StackPanel Grid.Row="9" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Cancel" Margin="4,0" MinWidth="70" Click="CancelButton_OnClick"/>
+            <Button Content="OK" Margin="4,0,0,0" MinWidth="70" Click="OKButton_OnClick"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -80,7 +80,7 @@ namespace BrowserScreenSaver
                 timer.Tick += (sender, args) =>
                 {
                     var utcNow = DateTime.UtcNow;
-                    var maxSeconds = SettingsWindow.EnableNavigationTimeSpan.TotalSeconds;
+                    var maxSeconds = AppConfigurationWindow.EnableNavigationTimeSpan.TotalSeconds;
                     var clippedRemainingSeconds = Math.Min(maxSeconds, (this.sharedConfig.NavigationEnabledByUtc - utcNow).TotalSeconds);
                     var blendAmmount = clippedRemainingSeconds > 0 ? clippedRemainingSeconds / maxSeconds : 0;
                     this.MainGrid.Background = Colors.LightPink.CreateBlendBrush(Colors.Red, blendAmmount);
