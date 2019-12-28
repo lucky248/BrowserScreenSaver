@@ -26,16 +26,14 @@ namespace BrowserScreenSaver
         private Uri baselineUri;
         private List<Uri> errorMessageUris = new List<Uri>();
 
-        private bool IsNavigationEnabled => this.NavigationEnabledByUtc > DateTime.UtcNow;
+        private bool IsNavigationEnabled => this.SharedConfiguration.NavigationEnabledByUtc > DateTime.UtcNow;
 
-        public event EventHandler ScaleChanged;
         public event EventHandler MaximizationChanged;
         public event EventHandler RefreshFrequencyChanged;
-        public event EventHandler<List<Uri>> SafeUriAdded;
+        public event EventHandler ScaleChanged;
+        
+        public AppConfiguration.SharedConfiguration SharedConfiguration { get; set; }
 
-
-        public DateTime NavigationEnabledByUtc { get; set; }
-        public IReadOnlyCollection<Uri> SafeUris { get; set; }
         public bool IsMaximized
         {
             get { return this.isMaximized; }
@@ -54,6 +52,7 @@ namespace BrowserScreenSaver
             {
                 this.isPreviewMode = value;
                 this.TitleBarPanel.Visibility = value ? Visibility.Collapsed : Visibility.Visible;
+                this.ErrorPanel.Visibility = value ? Visibility.Collapsed : this.ErrorPanel.Visibility;
             }
         }
 
@@ -218,7 +217,7 @@ namespace BrowserScreenSaver
                                     && (string.Equals(args.Uri.AbsolutePath, baselineUri.AbsolutePath, StringComparison.OrdinalIgnoreCase));
 
                 var isSafeUri = false;
-                foreach (var safePrefixUri in this.SafeUris)
+                foreach (var safePrefixUri in this.SharedConfiguration.SafeUris)
                 {
                     if (args.Uri.ToString().StartsWith(safePrefixUri.ToString()))
                     {
@@ -244,17 +243,7 @@ namespace BrowserScreenSaver
                     args.Cancel = true;
                 }
 
-                // Enable Add button if navigation is enabled
-                if (errorMessageUris.Count == 0)
-                {
-                    this.ErrorPanel.Visibility = Visibility.Collapsed;
-                }
-                else
-                {
-                    this.AddSafeUri.Visibility = this.IsNavigationEnabled ? Visibility.Visible : Visibility.Collapsed;
-                    this.ErrorPanel.Visibility = Visibility.Visible;
-                }
-
+                this.ErrorPanel.Visibility = errorMessageUris.Count == 0 || this.IsPreviewMode ? Visibility.Collapsed : Visibility.Visible;
                 SetTimerOnNavigation(args.Uri);
             };
 
@@ -310,11 +299,34 @@ namespace BrowserScreenSaver
 
         private void AddToSafeUriButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!this.IsNavigationEnabled)
+            {
+                FrameworkElement current = this;
+                while (current.Parent != null)
+                {
+                    current = (FrameworkElement)current.Parent;
+                }
+                Window parentWindow = (Window)current;
+
+                var validationErrorMessage = User.ConfirmCurrentUserCredentials(
+                    parentWindow: parentWindow,
+                    caption: "Confirm Credentials",
+                    message: "Confirm credentials to avoid browsing to an unapproved site on behalf of the current user.");
+
+                if (validationErrorMessage != null)
+                {
+                    MessageBox.Show(validationErrorMessage);
+                    return;
+                }
+
+                this.SharedConfiguration.NavigationEnabledByUtc = DateTime.UtcNow.AddSeconds(30);
+            }
+
             this.ErrorMessage.Text = string.Empty;
             this.ErrorPanel.Visibility = Visibility.Hidden;
             if (errorMessageUris.Count > 0)
             {
-                this.SafeUriAdded?.Invoke(this, errorMessageUris);
+                this.SharedConfiguration.AddSafeUris(errorMessageUris);
                 this.RefreshBrowser();
             }
         }

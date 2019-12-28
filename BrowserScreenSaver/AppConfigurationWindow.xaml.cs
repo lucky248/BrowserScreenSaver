@@ -63,7 +63,7 @@ namespace BrowserScreenSaver
             this.config.SharedConfig.OnResumeDisplayLogon = this.OnResume.IsChecked ?? true;
             this.config.SharedConfig.SafeUris.Clear();
             var uris = this.SafeUris.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(s => new Uri(s, UriKind.Absolute)).ToArray();
-            this.config.SharedConfig.SafeUris.AddRange(uris);
+            this.config.SharedConfig.AddSafeUris(uris);
             this.Close();
         }
 

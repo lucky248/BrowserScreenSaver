@@ -18,6 +18,8 @@ namespace BrowserScreenSaver
         private bool isPreviewMode;
         private AppConfiguration.SharedConfiguration sharedConfig;
         private AppConfiguration.WindowConfiguration windowConfig;
+        private DispatcherTimer timer;
+        private Brush savedBackground;
 
         public bool IsPreviewMode
         {
@@ -46,7 +48,7 @@ namespace BrowserScreenSaver
 
         public void InitializeConfig(AppConfiguration.SharedConfiguration sharedConfig, AppConfiguration.WindowConfiguration windowConfiguration)
         {
-            if(this.sharedConfig != null)
+            if (this.sharedConfig != null)
             {
                 throw new InvalidOperationException("Window is already initialized");
             }
@@ -68,6 +70,11 @@ namespace BrowserScreenSaver
             bottomColumnsDefinitions[0].Width = new GridLength(value: bottomLeftPanelWidth, type: GridUnitType.Star);
             bottomColumnsDefinitions[2].Width = new GridLength(value: 100 - bottomLeftPanelWidth, type: GridUnitType.Star);
 
+            this.savedBackground = this.MainGrid.Background;
+            this.timer = new DispatcherTimer();
+            this.timer.Tick += delegate { OnTimer(); };
+            timer.Interval = TimeSpan.FromSeconds(5);
+
             InitializePanel(this.TopLeftBrowser, windowConfiguration.Panes[0]);
             InitializePanel(this.TopRightBrowser, windowConfiguration.Panes[1]);
             InitializePanel(this.BottomLeftBrowser, windowConfiguration.Panes[2]);
@@ -75,46 +82,60 @@ namespace BrowserScreenSaver
 
             if (sharedConfig.NavigationEnabledByUtc > DateTime.UtcNow)
             {
-                var timer = new DispatcherTimer();
-                var savedBackground = this.MainGrid.Background;
-                timer.Tick += (sender, args) =>
+                this.timer.Start();
+            }
+
+            this.sharedConfig.Changed += delegate
+            {
+                if (sharedConfig.NavigationEnabledByUtc > DateTime.UtcNow)
                 {
-                    var utcNow = DateTime.UtcNow;
-                    var maxSeconds = AppConfigurationWindow.EnableNavigationTimeSpan.TotalSeconds;
-                    var clippedRemainingSeconds = Math.Min(maxSeconds, (this.sharedConfig.NavigationEnabledByUtc - utcNow).TotalSeconds);
-                    var blendAmmount = clippedRemainingSeconds > 0 ? clippedRemainingSeconds / maxSeconds : 0;
-                    this.MainGrid.Background = Colors.LightPink.CreateBlendBrush(Colors.Red, blendAmmount);
-                    if (clippedRemainingSeconds <= 0)
-                    {
-                        this.MainGrid.Background = savedBackground;
-                        timer.Stop();
-                    }
-                };
-                timer.Interval = TimeSpan.FromSeconds(1);
-                timer.Start();
+                    OnTimer();
+                    this.timer.Start();
+                }
+            };
+        }
+
+        private void OnTimer()
+        {
+            var utcNow = DateTime.UtcNow;
+            var maxSeconds = AppConfigurationWindow.EnableNavigationTimeSpan.TotalSeconds;
+            var clippedRemainingSeconds = Math.Min(maxSeconds, (this.sharedConfig.NavigationEnabledByUtc - utcNow).TotalSeconds);
+            if (clippedRemainingSeconds > 0)
+            {
+                var blendAmmount = clippedRemainingSeconds > 0 ? clippedRemainingSeconds / maxSeconds : 0;
+                this.MainGrid.Background = Colors.LightPink.CreateBlendBrush(Colors.Red, blendAmmount);
+            }
+            else
+            {
+                this.MainGrid.Background = this.savedBackground;
+                this.timer.Stop();
             }
         }
 
         private void InitializePanel(BrowserPanel panel, AppConfiguration.PaneConfiguration paneConfiguration)
         {
-            panel.Tag = paneConfiguration;
             panel.Scale = paneConfiguration.Scale;
             panel.RefreshFrequencyMin = paneConfiguration.RefreshFreq;
-            panel.NavigationEnabledByUtc = sharedConfig.NavigationEnabledByUtc;
-            panel.SafeUris = sharedConfig.SafeUris;
+            panel.SharedConfiguration = sharedConfig;
 
             panel.ScaleChanged += delegate
             {
-                paneConfiguration.Scale = panel.Scale;
-                this.ConfigurationChanged.Invoke(this, EventArgs.Empty);
+                if (panel.IsMaximized)
+                {
+                    paneConfiguration.ScaleMaximized = panel.Scale;
+                }
+                else
+                {
+                    paneConfiguration.Scale = panel.Scale;
+                }
+                this.ConfigurationChanged?.Invoke(this, EventArgs.Empty);
             };
             panel.RefreshFrequencyChanged += delegate
             {
                 paneConfiguration.RefreshFreq = panel.RefreshFrequencyMin;
-                this.ConfigurationChanged.Invoke(this, EventArgs.Empty);
+                this.ConfigurationChanged?.Invoke(this, EventArgs.Empty);
             };
-            panel.MaximizationChanged += Browser_OnMaximizationChanged;
-            panel.SafeUriAdded += Browser_SafeUriAdded;
+            panel.MaximizationChanged += delegate { OnPanelMaximizationChanged(paneConfiguration, panel); };
             Uri uri;
             if (Uri.TryCreate(paneConfiguration.Uri, UriKind.Absolute, out uri))
             {
@@ -122,52 +143,36 @@ namespace BrowserScreenSaver
             }
         }
 
-        private void Browser_SafeUriAdded(object sender, List<Uri> safeUris)
-        {
-            foreach(var uri in safeUris)
-            {
-                if(!this.sharedConfig.SafeUris.Contains(uri))
-                {
-                    this.sharedConfig.SafeUris.Add(uri);
-                }
-            }
-
-            this.ConfigurationChanged.Invoke(this, EventArgs.Empty);
-        }
-
-        private void Browser_OnMaximizationChanged(object sender, EventArgs eventArgs)
+        private void OnPanelMaximizationChanged(AppConfiguration.PaneConfiguration paneConfiguration, BrowserPanel panel)
         {
             // Restore currently maximized window (if any) first
             if (this.PopupMainGrid.Children.Count > 0)
             {
-                var formerMaximizedPanel = (BrowserPanel)this.PopupMainGrid.Children[0];
-                var formerParentGrid = (Grid)formerMaximizedPanel.Tag;
+                var formerParentGrid = (Grid)panel.Tag;
                 this.PopupMainGrid.Children.Clear();
-                formerParentGrid.Children.Add(formerMaximizedPanel);
+                formerParentGrid.Children.Add(panel);
 
                 // Re-enter this same method with a former panel (should be a no-op)
-                formerMaximizedPanel.IsMaximized = false;
-                var formerPaneConfiguration = (AppConfiguration.PaneConfiguration)formerMaximizedPanel.Tag;
-                formerMaximizedPanel.Scale = formerPaneConfiguration.Scale;
+                panel.IsMaximized = false;
+                panel.Scale = paneConfiguration.Scale;
             }
 
             // Maximize if needed
-            var newPanel = (BrowserPanel)sender;
-            if (newPanel.IsMaximized)
+            if (panel.IsMaximized)
             {
-                var currentParentGrid = (Grid)newPanel.Parent;
-                currentParentGrid.Children.Remove(newPanel);
-                newPanel.Tag = currentParentGrid;
-                this.PopupMainGrid.Children.Add(newPanel);
+                var currentParentGrid = (Grid)panel.Parent;
+                currentParentGrid.Children.Remove(panel);
+                panel.Tag = currentParentGrid;
+                this.PopupMainGrid.Children.Add(panel);
                 this.Popup.Height = this.ActualHeight * 0.75 - this.PopupMainGrid.Margin.Top - this.PopupMainGrid.Margin.Bottom;
                 this.Popup.Width = this.ActualWidth - this.PopupMainGrid.Margin.Left - this.PopupMainGrid.Margin.Right;
                 this.Popup.IsOpen = true;
-                var newPaneConfiguration = (AppConfiguration.PaneConfiguration)newPanel.Tag;
-                newPanel.Scale = newPaneConfiguration.Scale;
+                panel.Scale = paneConfiguration.ScaleMaximized;
             }
             else
             {
                 this.Popup.IsOpen = false;
+                panel.Scale = paneConfiguration.Scale;
             }
         }
 
@@ -179,12 +184,12 @@ namespace BrowserScreenSaver
             this.windowConfig.HorizontalSplitter = topHeight / (topHeight + this.BottomLeftBrowser.ActualHeight);
             this.windowConfig.TopVerticalSplitter = topLeftWidth / (topLeftWidth + this.TopRightBrowser.ActualWidth);
             this.windowConfig.BottomVerticalSplitter = bottomLeftWidth / (bottomLeftWidth + this.BottomRightBrowser.ActualWidth);
-            this.ConfigurationChanged.Invoke(this, EventArgs.Empty);
+            this.ConfigurationChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            this.ConfigurationChanged.Invoke(this, EventArgs.Empty);
+            this.ConfigurationChanged?.Invoke(this, EventArgs.Empty);
             if (!this.IsPreviewMode && this.sharedConfig.OnResumeDisplayLogon)
             {
                 Session.List().ForEach(s => s.Disconnect());

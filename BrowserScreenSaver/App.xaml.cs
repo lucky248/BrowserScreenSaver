@@ -32,7 +32,7 @@ namespace BrowserScreenSaver
             if (startupEventArgs.Args[0].ToLower().StartsWith("/p"))
             {
                 var previewHandle = Convert.ToInt32(startupEventArgs.Args[1]);
-                LaunchPreviewWinodw(previewHandle: previewHandle);
+                LaunchPreviewWinodw(previewHandle: previewHandle, config: config);
             }
             else if (startupEventArgs.Args[0].ToLower().StartsWith("/s"))
             {
@@ -57,7 +57,7 @@ namespace BrowserScreenSaver
             Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
         }
 
-        private static void LaunchPreviewWinodw(int previewHandle)
+        private static void LaunchPreviewWinodw(int previewHandle, AppConfiguration config)
         {
             var pPreviewHnd = new IntPtr(previewHandle);
             var lpRect = new NativeMethods.Rect();
@@ -78,8 +78,7 @@ namespace BrowserScreenSaver
                 var previewWindowContainer = new HwndSource(sourceParams);
 
                 var previewWindow = new MainWindow { IsPreviewMode = true };
-                //var config = MainWindowConfiguration.FromString(Settings.Default.Window1Config);
-                //this.previewWindow.InitializeConfig(config.SharedConfig, new[] { config.Panes[0], config.Panes[1], config.Panes[2], config.Panes[3] });
+                previewWindow.InitializeConfig(config.SharedConfig, config.Windows[0]);
                 previewWindowContainer.RootVisual = (Visual)previewWindow.Content;
                 previewWindowContainer.Disposed += delegate
                 {
@@ -90,9 +89,9 @@ namespace BrowserScreenSaver
 
         private static void LaunchScreensaverWindows(AppConfiguration config)
         {
+            config.SharedConfig.Changed += delegate { SaveConfiguration(config); };
             var ratio = Math.Max(System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width / SystemParameters.PrimaryScreenWidth,
                             System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Height / SystemParameters.PrimaryScreenHeight);
-
             for (int i = 0; i < System.Windows.Forms.Screen.AllScreens.Length && i < config.Windows.Count; i++)
             {
                 var screen = System.Windows.Forms.Screen.AllScreens[i];
@@ -102,21 +101,23 @@ namespace BrowserScreenSaver
                 window.Width = screen.WorkingArea.Width / ratio;
                 window.Height = screen.WorkingArea.Height / ratio;
                 window.WindowState = WindowState.Maximized;
-                window.ConfigurationChanged += delegate
-                {
-                        // Lots of false-positives on resize events. Go easy on Settings.Default.Save()
-                        var newConfig = config.ToString();
-                    if (!string.Equals(Settings.Default.Config, newConfig, StringComparison.Ordinal))
-                    {
-                        Settings.Default.Save();
-                    }
-                };
+                window.ConfigurationChanged += delegate { SaveConfiguration(config); };
                 window.InitializeConfig(config.SharedConfig, config.Windows[0]);
                 window.Show();
                 if (screen.Primary)
                 {
                     Current.MainWindow = window;
                 }
+            }
+        }
+
+        private static void SaveConfiguration(AppConfiguration config)
+        {
+            // Lots of false-positives on resize events. Go easy on Settings.Default.Save()
+            var newConfig = config.ToString();
+            if (!string.Equals(Settings.Default.Config, newConfig, StringComparison.Ordinal))
+            {
+                Settings.Default.Save();
             }
         }
     }

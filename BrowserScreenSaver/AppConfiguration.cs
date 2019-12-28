@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
@@ -12,9 +13,59 @@ namespace BrowserScreenSaver
 
         public class SharedConfiguration
         {
-            public bool OnResumeDisplayLogon { get; set; } = true;
-            public DateTime NavigationEnabledByUtc { get; set; } = new DateTime(year: 2000, month: 1, day: 1);
-            public List<Uri> SafeUris { get; } = new List<Uri>();
+            private bool onResumeDisplayLogon = false;
+            private DateTime navigationEnabledByUtc = new DateTime(year: 2000, month: 1, day: 1);
+
+            public event EventHandler Changed;
+
+            public bool OnResumeDisplayLogon
+            {
+                get
+                {
+                    return this.onResumeDisplayLogon;
+                }
+                set
+                {
+                    this.onResumeDisplayLogon = true;
+                    this.Changed?.Invoke(this, EventArgs.Empty);
+                }
+
+            }
+            public DateTime NavigationEnabledByUtc
+            {
+                get
+                { 
+                    return this.navigationEnabledByUtc; 
+                }
+                set
+                {
+                    this.navigationEnabledByUtc = value;
+                    this.Changed?.Invoke(this, EventArgs.Empty);
+                }
+            }
+
+            public IList<Uri> SafeUris { get; }
+
+            public SharedConfiguration()
+            {
+                var observableSafeUris = new ObservableCollection<Uri>();
+                observableSafeUris.CollectionChanged += delegate
+                  {
+                      this.Changed?.Invoke(this, EventArgs.Empty);
+                  };
+                this.SafeUris = observableSafeUris;
+            }
+
+            public void AddSafeUris(IEnumerable<Uri> uris)
+            {
+                foreach (var uri in uris)
+                {
+                    if (!this.SafeUris.Contains(uri))
+                    {
+                        this.SafeUris.Add(uri);
+                    }
+                }
+            }
         }
 
         public class PaneConfiguration
@@ -125,7 +176,7 @@ namespace BrowserScreenSaver
             for (int i = 0; i < uriCount; i++)
             {
                 var safeUri = new Uri(Encoding.Unicode.GetString(Convert.FromBase64String(values[valueIndex++])), UriKind.Absolute);
-                config.SharedConfig.SafeUris.Add(safeUri);
+                config.SharedConfig.AddSafeUris(new[] { safeUri });
             }
 
             int windowCount = int.Parse(values[valueIndex++]);
