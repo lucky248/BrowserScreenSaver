@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -45,8 +44,8 @@ namespace BrowserScreenSaver
                 }
             }
 
-            this.OnResume.IsChecked = config.SharedConfig.OnResumeDisplayLogon;
-            this.SafeUris.Text = string.Join(Environment.NewLine, config.SharedConfig.SafeUris.Select(u => u.ToString()).ToArray());
+            this.OnResume.IsChecked = config.SharedWindowConfig.OnResumeDisplayLogon;
+            this.SafeUris.Text = string.Join(Environment.NewLine, config.SharedPanelConfig.SafeUris.Select(u => u.ToString()).ToArray());
             this.UpdateNavigationEnabledText();
         }
 
@@ -60,10 +59,10 @@ namespace BrowserScreenSaver
                     config.Windows[monitorIdx].Panes[i].Uri = AppConfigurationWindow.GetUriSetting(monitorUris[monitorIdx][i].Text) ?? config.Windows[monitorIdx].Panes[i].Uri;
                 }
             }
-            this.config.SharedConfig.OnResumeDisplayLogon = this.OnResume.IsChecked ?? true;
-            this.config.SharedConfig.SafeUris.Clear();
+            this.config.SharedWindowConfig.OnResumeDisplayLogon = this.OnResume.IsChecked ?? true;
+            this.config.SharedPanelConfig.SafeUris.Clear();
             var uris = this.SafeUris.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(s => new Uri(s, UriKind.Absolute)).ToArray();
-            this.config.SharedConfig.AddSafeUris(uris);
+            this.config.SharedPanelConfig.AddSafeUris(uris);
             this.Close();
         }
 
@@ -90,14 +89,14 @@ namespace BrowserScreenSaver
 
         private void EnableNavigationBtn_Click(object sender, RoutedEventArgs e)
         {
-            this.config.SharedConfig.NavigationEnabledByUtc = DateTime.UtcNow + AppConfigurationWindow.EnableNavigationTimeSpan;
+            this.config.SharedPanelConfig.NavigationEnabledByUtc = DateTime.UtcNow + AppConfigurationWindow.EnableNavigationTimeSpan;
             UpdateNavigationEnabledText();
         }
 
         private void UpdateNavigationEnabledText()
         {
-            this.NavigationEnabledTextBlock.Text = this.config.SharedConfig.NavigationEnabledByUtc > DateTime.UtcNow
-                ? $"Enabled until {this.config.SharedConfig.NavigationEnabledByUtc.ToLocalTime()}"
+            this.NavigationEnabledTextBlock.Text = this.config.SharedPanelConfig.NavigationEnabledByUtc > DateTime.UtcNow
+                ? $"Enabled until {this.config.SharedPanelConfig.NavigationEnabledByUtc.ToLocalTime()}"
                 : "Browser navigation is disabled. Use 'Safe site prefixes' or temporary enable navigation to handle login pages.";
         }
 

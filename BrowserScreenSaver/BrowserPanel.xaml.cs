@@ -26,13 +26,13 @@ namespace BrowserScreenSaver
         private Uri baselineUri;
         private List<Uri> errorMessageUris = new List<Uri>();
 
-        private bool IsNavigationEnabled => this.SharedConfiguration.NavigationEnabledByUtc > DateTime.UtcNow;
+        private bool IsNavigationEnabled => this.SharedPanelConfiguration.NavigationEnabledByUtc > DateTime.UtcNow;
 
         public event EventHandler MaximizationChanged;
         public event EventHandler RefreshFrequencyChanged;
         public event EventHandler ScaleChanged;
         
-        public AppConfiguration.SharedConfiguration SharedConfiguration { get; set; }
+        public AppConfiguration.SharedPanelConfiguration SharedPanelConfiguration { get; set; }
 
         public bool IsMaximized
         {
@@ -217,7 +217,7 @@ namespace BrowserScreenSaver
                                     && (string.Equals(args.Uri.AbsolutePath, baselineUri.AbsolutePath, StringComparison.OrdinalIgnoreCase));
 
                 var isSafeUri = false;
-                foreach (var safePrefixUri in this.SharedConfiguration.SafeUris)
+                foreach (var safePrefixUri in this.SharedPanelConfiguration.SafeUris)
                 {
                     if (args.Uri.ToString().StartsWith(safePrefixUri.ToString()))
                     {
@@ -319,14 +319,14 @@ namespace BrowserScreenSaver
                     return;
                 }
 
-                this.SharedConfiguration.NavigationEnabledByUtc = DateTime.UtcNow.AddSeconds(30);
+                this.SharedPanelConfiguration.NavigationEnabledByUtc = DateTime.UtcNow.AddSeconds(30);
             }
 
             this.ErrorMessage.Text = string.Empty;
             this.ErrorPanel.Visibility = Visibility.Hidden;
             if (errorMessageUris.Count > 0)
             {
-                this.SharedConfiguration.AddSafeUris(errorMessageUris);
+                this.SharedPanelConfiguration.AddSafeUris(errorMessageUris);
                 this.RefreshBrowser();
             }
         }

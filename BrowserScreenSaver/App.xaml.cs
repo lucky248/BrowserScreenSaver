@@ -78,7 +78,7 @@ namespace BrowserScreenSaver
                 var previewWindowContainer = new HwndSource(sourceParams);
 
                 var previewWindow = new MainWindow { IsPreviewMode = true };
-                previewWindow.InitializeConfig(config.SharedConfig, config.Windows[0]);
+                previewWindow.InitializeConfig(config.Windows[0], config.SharedWindowConfig, config.SharedPanelConfig);
                 previewWindowContainer.RootVisual = (Visual)previewWindow.Content;
                 previewWindowContainer.Disposed += delegate
                 {
@@ -89,7 +89,11 @@ namespace BrowserScreenSaver
 
         private static void LaunchScreensaverWindows(AppConfiguration config)
         {
-            config.SharedConfig.Changed += delegate { SaveConfiguration(config); };
+            config.SharedPanelConfig.Changed += delegate 
+            { 
+                SaveConfiguration(config); 
+            };
+
             var ratio = Math.Max(System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width / SystemParameters.PrimaryScreenWidth,
                             System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Height / SystemParameters.PrimaryScreenHeight);
             for (int i = 0; i < System.Windows.Forms.Screen.AllScreens.Length && i < config.Windows.Count; i++)
@@ -102,7 +106,7 @@ namespace BrowserScreenSaver
                 window.Height = screen.WorkingArea.Height / ratio;
                 window.WindowState = WindowState.Maximized;
                 window.ConfigurationChanged += delegate { SaveConfiguration(config); };
-                window.InitializeConfig(config.SharedConfig, config.Windows[0]);
+                window.InitializeConfig(config.Windows[i], config.SharedWindowConfig, config.SharedPanelConfig);
                 window.Show();
                 if (screen.Primary)
                 {

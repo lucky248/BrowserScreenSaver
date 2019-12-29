@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing.Imaging;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using BrowserScreenSaver.Extensions;
-using BrowserScreenSaver.Properties;
 
 namespace BrowserScreenSaver
 {
@@ -16,7 +14,8 @@ namespace BrowserScreenSaver
     public partial class MainWindow : Window
     {
         private bool isPreviewMode;
-        private AppConfiguration.SharedConfiguration sharedConfig;
+        private AppConfiguration.SharedPanelConfiguration sharedPanelConfig;
+        private AppConfiguration.SharedWindowConfiguration sharedWindowConfig;
         private AppConfiguration.WindowConfiguration windowConfig;
         private DispatcherTimer timer;
         private Brush savedBackground;
@@ -46,14 +45,15 @@ namespace BrowserScreenSaver
             InitializeComponent();
         }
 
-        public void InitializeConfig(AppConfiguration.SharedConfiguration sharedConfig, AppConfiguration.WindowConfiguration windowConfiguration)
+        public void InitializeConfig(AppConfiguration.WindowConfiguration windowConfiguration, AppConfiguration.SharedWindowConfiguration sharedWindowConfig, AppConfiguration.SharedPanelConfiguration sharedPanelConfig)
         {
-            if (this.sharedConfig != null)
+            if (this.sharedPanelConfig != null)
             {
                 throw new InvalidOperationException("Window is already initialized");
             }
 
-            this.sharedConfig = sharedConfig;
+            this.sharedPanelConfig = sharedPanelConfig;
+            this.sharedWindowConfig = sharedWindowConfig;
             this.windowConfig = windowConfiguration;
             var rowDefinitions = this.MainGrid.RowDefinitions;
             var topPanelHeight = (int)(windowConfiguration.HorizontalSplitter * 100);
@@ -80,14 +80,14 @@ namespace BrowserScreenSaver
             InitializePanel(this.BottomLeftBrowser, windowConfiguration.Panes[2]);
             InitializePanel(this.BottomRightBrowser, windowConfiguration.Panes[3]);
 
-            if (sharedConfig.NavigationEnabledByUtc > DateTime.UtcNow)
+            if (sharedPanelConfig.NavigationEnabledByUtc > DateTime.UtcNow)
             {
                 this.timer.Start();
             }
 
-            this.sharedConfig.Changed += delegate
+            this.sharedPanelConfig.Changed += delegate
             {
-                if (sharedConfig.NavigationEnabledByUtc > DateTime.UtcNow)
+                if (sharedPanelConfig.NavigationEnabledByUtc > DateTime.UtcNow)
                 {
                     OnTimer();
                     this.timer.Start();
@@ -99,7 +99,7 @@ namespace BrowserScreenSaver
         {
             var utcNow = DateTime.UtcNow;
             var maxSeconds = AppConfigurationWindow.EnableNavigationTimeSpan.TotalSeconds;
-            var clippedRemainingSeconds = Math.Min(maxSeconds, (this.sharedConfig.NavigationEnabledByUtc - utcNow).TotalSeconds);
+            var clippedRemainingSeconds = Math.Min(maxSeconds, (this.sharedPanelConfig.NavigationEnabledByUtc - utcNow).TotalSeconds);
             if (clippedRemainingSeconds > 0)
             {
                 var blendAmmount = clippedRemainingSeconds > 0 ? clippedRemainingSeconds / maxSeconds : 0;
@@ -112,11 +112,11 @@ namespace BrowserScreenSaver
             }
         }
 
-        private void InitializePanel(BrowserPanel panel, AppConfiguration.PaneConfiguration paneConfiguration)
+        private void InitializePanel(BrowserPanel panel, AppConfiguration.PanelConfiguration paneConfiguration)
         {
             panel.Scale = paneConfiguration.Scale;
             panel.RefreshFrequencyMin = paneConfiguration.RefreshFreq;
-            panel.SharedConfiguration = sharedConfig;
+            panel.SharedPanelConfiguration = sharedPanelConfig;
 
             panel.ScaleChanged += delegate
             {
@@ -143,7 +143,7 @@ namespace BrowserScreenSaver
             }
         }
 
-        private void OnPanelMaximizationChanged(AppConfiguration.PaneConfiguration paneConfiguration, BrowserPanel panel)
+        private void OnPanelMaximizationChanged(AppConfiguration.PanelConfiguration paneConfiguration, BrowserPanel panel)
         {
             // Restore currently maximized window (if any) first
             if (this.PopupMainGrid.Children.Count > 0)
@@ -190,9 +190,9 @@ namespace BrowserScreenSaver
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             this.ConfigurationChanged?.Invoke(this, EventArgs.Empty);
-            if (!this.IsPreviewMode && this.sharedConfig.OnResumeDisplayLogon)
+            if (!this.IsPreviewMode && this.sharedWindowConfig.OnResumeDisplayLogon)
             {
-                Session.List().ForEach(s => s.Disconnect());
+                Session.List().Where(s => s.State == NativeMethods.WTS_CONNECTSTATE_CLASS.WTSActive).ToList().ForEach(s => s.Disconnect());
             }
         }
     }

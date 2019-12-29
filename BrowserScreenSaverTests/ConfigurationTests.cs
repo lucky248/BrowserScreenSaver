@@ -90,16 +90,16 @@ True
         public void ConfigurationRoundtripTest()
         {
             AppConfiguration appConfig = new AppConfiguration();
-            appConfig.SharedConfig.OnResumeDisplayLogon = true;
-            appConfig.SharedConfig.SafeUris.Add(new Uri("http://one.two/3?4"));
-            appConfig.SharedConfig.SafeUris.Add(new Uri("http://fice.six/7?8"));
+            appConfig.SharedWindowConfig.OnResumeDisplayLogon = false;
+            appConfig.SharedPanelConfig.SafeUris.Add(new Uri("http://one.two/3?4"));
+            appConfig.SharedPanelConfig.SafeUris.Add(new Uri("http://fice.six/7?8"));
 
             for (int w = 0; w < appConfig.Windows.Count; w++)
             {
                 appConfig.Windows[w].BottomVerticalSplitter = 0.1 * w;
                 appConfig.Windows[w].HorizontalSplitter = 0.2 * w;
                 appConfig.Windows[w].TopVerticalSplitter = 0.3 * w;
-                appConfig.SharedConfig.NavigationEnabledByUtc = new DateTime(year: 2001, month: 2, day: 3);
+                appConfig.SharedPanelConfig.NavigationEnabledByUtc = new DateTime(year: 2001, month: 2, day: 3);
 
                 for (int p = 0; p < appConfig.Windows[w].Panes.Count; p++)
                 {
@@ -116,7 +116,7 @@ True
             Assert.AreEqual(serialized1, serialized2);
 
             var rawValue = @"v1
-True
+False
 2/3/2001 12:00:00 AM
 2
 aAB0AHQAcAA6AC8ALwBvAG4AZQAuAHQAdwBvAC8AMwA/ADQA
