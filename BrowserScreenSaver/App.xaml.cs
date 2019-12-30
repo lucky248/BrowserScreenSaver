@@ -104,10 +104,10 @@ namespace BrowserScreenSaver
                 window.Top = screen.WorkingArea.Top / ratio;
                 window.Width = screen.WorkingArea.Width / ratio;
                 window.Height = screen.WorkingArea.Height / ratio;
-                window.WindowState = WindowState.Maximized;
                 window.ConfigurationChanged += delegate { SaveConfiguration(config); };
                 window.InitializeConfig(config.Windows[i], config.SharedWindowConfig, config.SharedPanelConfig);
                 window.Show();
+                window.WindowState = WindowState.Maximized; // Change WindowState after calling Show
                 if (screen.Primary)
                 {
                     Current.MainWindow = window;
