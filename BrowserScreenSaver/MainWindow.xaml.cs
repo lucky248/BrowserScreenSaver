@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using BrowserScreenSaver.Extensions;
 
@@ -17,8 +18,6 @@ namespace BrowserScreenSaver
         private AppConfiguration.SharedPanelConfiguration sharedPanelConfig;
         private AppConfiguration.SharedWindowConfiguration sharedWindowConfig;
         private AppConfiguration.WindowConfiguration windowConfig;
-        private DispatcherTimer timer;
-        private Brush savedBackground;
 
         public bool IsPreviewMode
         {
@@ -70,45 +69,84 @@ namespace BrowserScreenSaver
             bottomColumnsDefinitions[0].Width = new GridLength(value: bottomLeftPanelWidth, type: GridUnitType.Star);
             bottomColumnsDefinitions[2].Width = new GridLength(value: 100 - bottomLeftPanelWidth, type: GridUnitType.Star);
 
-            this.savedBackground = this.MainGrid.Background;
-            this.timer = new DispatcherTimer();
-            this.timer.Tick += delegate { OnTimer(); };
-            timer.Interval = TimeSpan.FromSeconds(5);
+            CheckShowStartupDelayScreen(
+                completionAction: delegate
+                    {
+                        InitializePanel(this.TopLeftBrowser, windowConfiguration.Panes[0]);
+                        InitializePanel(this.TopRightBrowser, windowConfiguration.Panes[1]);
+                        InitializePanel(this.BottomLeftBrowser, windowConfiguration.Panes[2]);
+                        InitializePanel(this.BottomRightBrowser, windowConfiguration.Panes[3]);
+                    });
 
-            InitializePanel(this.TopLeftBrowser, windowConfiguration.Panes[0]);
-            InitializePanel(this.TopRightBrowser, windowConfiguration.Panes[1]);
-            InitializePanel(this.BottomLeftBrowser, windowConfiguration.Panes[2]);
-            InitializePanel(this.BottomRightBrowser, windowConfiguration.Panes[3]);
-
-            if (sharedPanelConfig.NavigationEnabledByUtc > DateTime.UtcNow)
-            {
-                this.timer.Start();
-            }
-
+            CheckStartBackgroundAnimation();
             this.sharedPanelConfig.Changed += delegate
             {
-                if (sharedPanelConfig.NavigationEnabledByUtc > DateTime.UtcNow)
-                {
-                    OnTimer();
-                    this.timer.Start();
-                }
+                CheckStartBackgroundAnimation();
             };
         }
 
-        private void OnTimer()
+        void CheckShowStartupDelayScreen(Action completionAction)
+        {
+            uint startupDelaySec = this.sharedWindowConfig.StartupDelaySec;
+            if(startupDelaySec == 0)
+            {
+                completionAction();
+                return;
+            }
+            
+            var timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(0.1);
+            var finishTime = DateTime.UtcNow.AddSeconds(startupDelaySec);
+            timer.Tick += delegate
+            {
+                if (this.PopupMainGrid.Children.Count == 0)
+                {
+                    var grid = new Grid()
+                    {
+                        VerticalAlignment = VerticalAlignment.Stretch,
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        Height = this.ActualHeight * 0.5,
+                        Width = this.ActualWidth * 0.5,
+                    };
+                    grid.Children.Add(
+                        new TextBlock()
+                        {
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Center
+                        });
+                    this.PopupMainGrid.Children.Add(grid);
+
+                    this.Popup.Height = this.ActualHeight;
+                    this.Popup.Width = this.ActualWidth;
+                }
+
+                var secondsLeft = (finishTime - DateTime.UtcNow).TotalSeconds;
+                var gridContainer = (Grid)this.PopupMainGrid.Children[0];
+                var textBlock = (TextBlock)gridContainer.Children[0];
+                textBlock.Text = $"Holding on initailization for {(int)secondsLeft} more seconds.";
+                if (secondsLeft < 0.2)
+                {
+                    timer.Stop();
+                    this.PopupMainGrid.Children.Clear();
+                    this.Popup.IsOpen = false;
+                    completionAction();
+                }
+            };
+            this.Popup.IsOpen = true;
+            timer.Start();
+        }
+
+        void CheckStartBackgroundAnimation()
         {
             var utcNow = DateTime.UtcNow;
             var maxSeconds = AppConfigurationWindow.EnableNavigationTimeSpan.TotalSeconds;
             var clippedRemainingSeconds = Math.Min(maxSeconds, (this.sharedPanelConfig.NavigationEnabledByUtc - utcNow).TotalSeconds);
             if (clippedRemainingSeconds > 0)
             {
-                var blendAmmount = clippedRemainingSeconds > 0 ? clippedRemainingSeconds / maxSeconds : 0;
-                this.MainGrid.Background = Colors.LightPink.CreateBlendBrush(Colors.Red, blendAmmount);
-            }
-            else
-            {
-                this.MainGrid.Background = this.savedBackground;
-                this.timer.Stop();
+                var storyboard = (Storyboard)this.Resources["BackgroundStoryboard"];
+                var animation = (ColorAnimation)storyboard.Children[0];
+                animation.Duration = TimeSpan.FromSeconds(clippedRemainingSeconds);
+                storyboard.Begin();
             }
         }
 

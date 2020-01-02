@@ -46,6 +46,7 @@ namespace BrowserScreenSaver
 
             this.OnResume.IsChecked = config.SharedWindowConfig.OnResumeDisplayLogon;
             this.SafeUris.Text = string.Join(Environment.NewLine, config.SharedPanelConfig.SafeUris.Select(u => u.ToString()).ToArray());
+            this.PreStartupDelay.Text = config.SharedWindowConfig.StartupDelaySec.ToString();
             this.UpdateNavigationEnabledText();
         }
 
@@ -59,7 +60,11 @@ namespace BrowserScreenSaver
                     config.Windows[monitorIdx].Panes[i].Uri = AppConfigurationWindow.GetUriSetting(monitorUris[monitorIdx][i].Text) ?? config.Windows[monitorIdx].Panes[i].Uri;
                 }
             }
+
+            uint startupDelaySec = 0;
+            uint.TryParse(this.PreStartupDelay.Text, out startupDelaySec);
             this.config.SharedWindowConfig.OnResumeDisplayLogon = this.OnResume.IsChecked ?? true;
+            this.config.SharedWindowConfig.StartupDelaySec = startupDelaySec;
             this.config.SharedPanelConfig.SafeUris.Clear();
             var uris = this.SafeUris.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(s => new Uri(s, UriKind.Absolute)).ToArray();
             this.config.SharedPanelConfig.AddSafeUris(uris);
@@ -123,6 +128,16 @@ namespace BrowserScreenSaver
 
             // Validate if specified URI is valid
             border.BorderBrush = AppConfigurationWindow.GetUriSetting(textBox.Text) == null ? Brushes.Red : Brushes.Transparent;
+        }
+
+        private void PreStartupDelay_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            var newValue = this.PreStartupDelay.Text.Substring(0, this.PreStartupDelay.SelectionStart) 
+                + e.Text
+                + this.PreStartupDelay.Text.Substring(this.PreStartupDelay.SelectionStart + this.PreStartupDelay.SelectionLength);
+            ushort value;
+            bool isValid = ushort.TryParse(newValue, out value);
+            e.Handled = !isValid;
         }
     }
 }

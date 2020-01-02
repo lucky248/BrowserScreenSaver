@@ -6,6 +6,14 @@
         xmlns:local="clr-namespace:BrowserScreenSaver"
         mc:Ignorable="d"
         Title="MainWindow" WindowStyle="None" Closing="Window_Closing">
+    <Window.Resources>
+        <Storyboard x:Key="BackgroundStoryboard">
+            <ColorAnimation 
+                Storyboard.TargetProperty="(Panel.Background).(SolidColorBrush.Color)" 
+                Storyboard.TargetName="MainGrid"
+                From="Red" To="{x:Static SystemColors.ControlColor}"/>
+        </Storyboard>
+    </Window.Resources>
     <Grid x:Name="MainGrid" Background="Silver">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -33,7 +41,7 @@
             <GridSplitter Grid.Column="1" Name="BottomGridSplitter" Width="5" ResizeBehavior="PreviousAndNext" VerticalAlignment="Stretch" ShowsPreview="True" />
             <local:BrowserPanel Grid.Column="2" x:Name="BottomRightBrowser" Height="Auto" Width="Auto" SizeChanged="TopBrowser_OnSizeChanged"/>
         </Grid>
-        <Popup Grid.Row="0" Grid.RowSpan="3" Name="Popup" Placement="Absolute">
+        <Popup Grid.Row="0" Grid.RowSpan="3" Name="Popup" Placement="Center">
             <Grid Background="Silver">
                 <Grid Name="PopupMainGrid" Margin="6">
                 </Grid>

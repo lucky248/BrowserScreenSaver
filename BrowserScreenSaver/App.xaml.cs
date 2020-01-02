@@ -121,6 +121,7 @@ namespace BrowserScreenSaver
             var newConfig = config.ToString();
             if (!string.Equals(Settings.Default.Config, newConfig, StringComparison.Ordinal))
             {
+                Settings.Default.Config = newConfig;
                 Settings.Default.Save();
             }
         }

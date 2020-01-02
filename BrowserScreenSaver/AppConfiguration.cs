@@ -12,6 +12,7 @@ namespace BrowserScreenSaver
         public class SharedWindowConfiguration
         {
             public bool OnResumeDisplayLogon { get; set; } = true;
+            public uint StartupDelaySec { get; set; } = 0;
         }
 
         public class SharedPanelConfiguration
@@ -123,8 +124,9 @@ namespace BrowserScreenSaver
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("v1");
+            sb.AppendLine("2");
             sb.AppendLine(this.SharedWindowConfig.OnResumeDisplayLogon.ToString());
+            sb.AppendLine(this.SharedWindowConfig.StartupDelaySec.ToString());
             sb.AppendLine(this.SharedPanelConfig.NavigationEnabledByUtc.ToString());
             sb.AppendLine(this.SharedPanelConfig.SafeUris.Count.ToString());
             foreach(var uri in this.SharedPanelConfig.SafeUris)
@@ -159,8 +161,13 @@ namespace BrowserScreenSaver
             }
 
             var values = value.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            var version = values[0] == "v1" ? 1 : int.Parse(values[0]);
             var valueIndex = 1;
             config.SharedWindowConfig.OnResumeDisplayLogon = bool.Parse(values[valueIndex++]);
+            if(version > 1)
+            {
+                config.SharedWindowConfig.StartupDelaySec = uint.Parse(values[valueIndex++]);
+            }
             config.SharedPanelConfig.NavigationEnabledByUtc = DateTime.Parse(values[valueIndex++]);
             var uriCount = int.Parse(values[valueIndex++]);
             for (int i = 0; i < uriCount; i++)

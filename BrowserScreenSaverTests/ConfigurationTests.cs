@@ -17,8 +17,9 @@ namespace BrowserScreenSaverTests
 
             config = AppConfiguration.FromString(string.Empty);
             var defaultConfig = config.ToString();
-            var expectedConfig = @"v1
+            var expectedConfig = @"2
 True
+0
 1/1/2000 12:00:00 AM
 0
 3
@@ -91,6 +92,7 @@ True
         {
             AppConfiguration appConfig = new AppConfiguration();
             appConfig.SharedWindowConfig.OnResumeDisplayLogon = false;
+            appConfig.SharedWindowConfig.StartupDelaySec = 123;
             appConfig.SharedPanelConfig.SafeUris.Add(new Uri("http://one.two/3?4"));
             appConfig.SharedPanelConfig.SafeUris.Add(new Uri("http://fice.six/7?8"));
 
@@ -115,8 +117,9 @@ True
             var serialized2 = appConfig2.ToString();
             Assert.AreEqual(serialized1, serialized2);
 
-            var rawValue = @"v1
+            var rawValue = @"2
 False
+123
 2/3/2001 12:00:00 AM
 2
 aAB0AHQAcAA6AC8ALwBvAG4AZQAuAHQAdwBvAC8AMwA/ADQA
