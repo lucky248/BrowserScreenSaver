@@ -61,6 +61,7 @@
     </ApplicationDefinition>
     <Compile Include="DocHostUIHandler.cs" />
     <Compile Include="AppConfiguration.cs" />
+    <Compile Include="Extensions\Dispatcher.cs" />
     <Compile Include="User.cs" />
     <Compile Include="WebBrowserEventSink.cs" />
     <Compile Include="BrowserPanel.xaml.cs">

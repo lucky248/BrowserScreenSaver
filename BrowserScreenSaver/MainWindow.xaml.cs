@@ -72,10 +72,10 @@ namespace BrowserScreenSaver
             CheckShowStartupDelayScreen(
                 completionAction: delegate
                     {
-                        InitializePanel(this.TopLeftBrowser, windowConfiguration.Panes[0]);
-                        InitializePanel(this.TopRightBrowser, windowConfiguration.Panes[1]);
-                        InitializePanel(this.BottomLeftBrowser, windowConfiguration.Panes[2]);
-                        InitializePanel(this.BottomRightBrowser, windowConfiguration.Panes[3]);
+                        this.Dispatcher.DelayInvoke(TimeSpan.FromSeconds(1), () => InitializePanel(this.TopLeftBrowser, windowConfiguration.Panes[0]));
+                        this.Dispatcher.DelayInvoke(TimeSpan.FromSeconds(5), () => InitializePanel(this.TopRightBrowser, windowConfiguration.Panes[1]));
+                        this.Dispatcher.DelayInvoke(TimeSpan.FromSeconds(10), () => InitializePanel(this.BottomLeftBrowser, windowConfiguration.Panes[2]));
+                        this.Dispatcher.DelayInvoke(TimeSpan.FromSeconds(15), () => InitializePanel(this.BottomRightBrowser, windowConfiguration.Panes[3]));
                     });
 
             CheckStartBackgroundAnimation();
